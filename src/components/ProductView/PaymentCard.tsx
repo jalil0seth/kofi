@@ -2,25 +2,30 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Package, Star } from "lucide-react";
+import { Package, Star, Shield, Mail, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { initializePayPal } from "@/lib/paypal";
+import { Label } from "@/components/ui/label";
 
 interface PaymentCardProps {
-  amount: string;
-  onAmountChange: (value: string) => void;
+  formData: {
+    name: string;
+    email: string;
+    amount: string;
+  };
+  onFormChange: (data: any) => void;
   onPayment: () => void;
   salesCount: number;
 }
 
-export function PaymentCard({ amount, onAmountChange, onPayment, salesCount }: PaymentCardProps) {
+export function PaymentCard({ formData, onFormChange, onPayment, salesCount }: PaymentCardProps) {
   const paypalButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const setupPayPal = async () => {
       try {
-        if (paypalButtonRef.current) {
-          const paypal = await initializePayPal(amount || "0");
+        if (paypalButtonRef.current && formData.amount) {
+          const paypal = await initializePayPal(formData.amount);
           paypal.Buttons({
             style: {
               layout: 'vertical',
@@ -32,7 +37,7 @@ export function PaymentCard({ amount, onAmountChange, onPayment, salesCount }: P
               return actions.order.create({
                 purchase_units: [{
                   amount: {
-                    value: amount || "0",
+                    value: formData.amount || "0",
                     currency_code: "USD"
                   }
                 }]
@@ -50,29 +55,75 @@ export function PaymentCard({ amount, onAmountChange, onPayment, salesCount }: P
     };
 
     setupPayPal();
-  }, [amount, onPayment]);
+  }, [formData.amount, onPayment]);
+
+  const handleChange = (field: string, value: string) => {
+    onFormChange({ ...formData, [field]: value });
+  };
 
   return (
-    <Card className="p-6 border border-gray-100 shadow-lg rounded-xl bg-white/50 backdrop-blur-sm">
-      <h3 className="font-semibold text-lg mb-4 text-gray-900">How much would you like to pay?</h3>
-      <div className="space-y-4">
-        <Input
-          type="text"
-          placeholder="Free or more"
-          value={amount}
-          onChange={(e) => onAmountChange(e.target.value)}
-          className="bg-white border-gray-200 h-12 text-lg rounded-lg focus:ring-2 focus:ring-purple-500"
-        />
-        <Button className="w-full h-12 text-lg font-medium bg-black text-white hover:bg-gray-800 rounded-lg transition-all duration-200 shadow-md hover:shadow-xl">
-          Get Now
-        </Button>
-        <div ref={paypalButtonRef} className="mt-2" />
-        <div className="flex flex-wrap items-center gap-2 mt-4">
+    <Card className="p-6 border border-gray-100 shadow-xl rounded-xl bg-white/90 backdrop-blur-sm">
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-semibold text-lg mb-2 text-gray-900">Complete Your Purchase</h3>
+          <p className="text-sm text-gray-600">Support the artist by paying what you think is fair</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <Input
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                className="pl-10 bg-white border-gray-200"
+                placeholder="Your name"
+              />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className="pl-10 bg-white border-gray-200"
+                placeholder="your@email.com"
+              />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount (USD)</Label>
+            <Input
+              id="amount"
+              type="text"
+              value={formData.amount}
+              onChange={(e) => handleChange('amount', e.target.value)}
+              className="bg-white border-gray-200 text-lg"
+              placeholder="Enter amount"
+            />
+          </div>
+        </div>
+
+        <div ref={paypalButtonRef} className="mt-4" />
+
+        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
           <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 bg-purple-50 text-purple-700 rounded-lg border-0">
-            <Star className="h-4 w-4" /> {salesCount} sold
+            <Star className="h-4 w-4" /> {salesCount} sales
           </Badge>
           <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 bg-blue-50 text-blue-700 rounded-lg border-0">
-            <Package className="h-4 w-4" /> Hi-res PNG included
+            <Package className="h-4 w-4" /> Hi-res PNG
+          </Badge>
+          <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 bg-green-50 text-green-700 rounded-lg border-0">
+            <Shield className="h-4 w-4" /> Secure payment
           </Badge>
         </div>
       </div>
